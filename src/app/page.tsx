@@ -36,7 +36,7 @@ type ChartProps = {
 const Chart: React.FC<ChartProps> = ({ history, chartKey, label }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  let values : number[] = [];
+  let values : number[];
   switch (chartKey) {
     case 'CONDENSOR_TOTAL':
         values = history.map(d => d.CONDENSER_VOLUME + d.CONDENSER_VAPOR_VOLUME);
@@ -58,7 +58,7 @@ const Chart: React.FC<ChartProps> = ({ history, chartKey, label }) => {
     const margin = { top: 20, right: 30, bottom: 30, left: 50 };
 
     // Compute values for the selected key or total
-    let values : number[] = [];
+    let values : number[];
     switch (chartKey) {
       case 'CONDENSOR_TOTAL':
         values = history.map(d => d.CONDENSER_VOLUME + d.CONDENSER_VAPOR_VOLUME);
