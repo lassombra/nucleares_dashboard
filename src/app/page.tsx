@@ -129,7 +129,7 @@ const HistoryGraph: React.FC = () => {
     let lastTimestamp = 0;
     const fetchData = async () => {
       try {
-        const res = await fetch(ENDPOINT);
+        const res = await fetch(ENDPOINT, {mode: "no-cors", method: "get"});
         const data = await res.json();
         setConnected(true);
         if (data.values.TIME_STAMP != lastTimestamp) {
