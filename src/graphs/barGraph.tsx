@@ -106,7 +106,7 @@ export function BarGraph(props: BarGraphProps) {
         }
     })()
     return <div className="flex flex-col overflow-hidden">
-        <h2>{props.label}</h2>
+        <h2 className="text-gray-500 font-bold text-2xl">{props.label}</h2>
         <div ref={ref} className="overflow-hidden h-full">
         <svg style={{border: '1px solid gold'}} width={dimensions.width} height={dimensions.height}>
             <LeftAxis domain={axes[0].domain()} range={axes[0].range()} />

@@ -8,7 +8,7 @@ export default function RightAxis(props: { domain: number[], range: number[], le
         const scale = scaleLinear()
             .domain(props.domain)
             .range(props.range);
-        const approxTickCount = Math.min(10, Math.floor(Math.abs(props.range[0] - props.range[1]) / 30));
+        const approxTickCount = Math.min(10, Math.floor(Math.abs(props.range[0] - props.range[1]) / 40));
         const ticks = scale.ticks(approxTickCount)
             .map(value => Math.round(value * 100) / 100);
         return Array.from(new Set(ticks))

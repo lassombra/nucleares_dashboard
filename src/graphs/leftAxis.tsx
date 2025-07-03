@@ -8,12 +8,16 @@ export default function LeftAxis(props: {domain: number[], range: number[] }) {
         const scale = scaleLinear()
             .domain(props.domain)
             .range(props.range);
-        return scale.ticks().map(value => {
-            return {
-                value,
-                yOffset: scale(value)
-            };
-        })
+        const approxTickCount = Math.min(10, Math.floor(Math.abs(props.range[0] - props.range[1]) / 40));
+        const ticks = scale.ticks(approxTickCount)
+            .map(value => Math.round(value * 100) / 100);
+        return Array.from(new Set(ticks))
+            .map(value => {
+                return {
+                    value,
+                    yOffset: scale(value)
+                };
+            });
     }, [domainString, rangeString]);
     return <svg>
         <path d={[

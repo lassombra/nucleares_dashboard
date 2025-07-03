@@ -1,31 +1,31 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
-import * as d3 from 'd3';
+import React, {useEffect, useState} from 'react';
+import {BarGraph, ColorOptions, HistoryDataPoint, SecondaryAxisSource, SecondaryGraphType} from "@/graphs/barGraph";
+import {color} from "d3";
+import {RGBColor} from "d3-color";
 
 type DataPoint = {
   timestamp: number;
   CONDENSER_VOLUME: number;
   CONDENSER_VAPOR_VOLUME: number;
+  COOLANT_SEC_0_LIQUID_VOLUME: number;
+  COOLANT_SEC_0_VOLUME: number;
+  COOLANT_SEC_1_LIQUID_VOLUME: number;
+  COOLANT_SEC_1_VOLUME: number;
+  COOLANT_SEC_2_LIQUID_VOLUME: number;
   COOLANT_SEC_2_VOLUME: number;
   VACUUM_RETENTION_TANK_VOLUME: number;
   CORE_TEMP: number;
+  CORE_STATE_CRITICALITY: number;
   CORE_XENON_CUMULATIVE: number;
   CORE_IODINE_CUMULATIVE: number;
+  GENERATOR_0_KW: number;
+  GENERATOR_1_KW: number;
+  GENERATOR_2_KW: number;
+  POWER_DEMAND_MW: number;
 };
 
-const ENDPOINT = 'http://localhost:8785/?variable=WEBSERVER_BATCH_GET&value=*condenser_vapor_volume*,*condenser_volume*,*coolant_sec_2_volume*,VACUUM_RETENTION_TANK_VOLUME,*core*';
-
-const chartConfigs = [
-  { key: 'CONDENSER_VOLUME', label: 'Condenser Volume' },
-  { key: 'CONDENSER_VAPOR_VOLUME', label: 'Condenser Vapor Volume' },
-  { key: 'COOLANT_SEC_2_VOLUME', label: 'Coolant Sec 2 Volume' },
-  { key: 'CONDENSOR_TOTAL', label: 'Condenser Total' },
-  { key: 'CORE_TEMP', label: 'Core Temperature' },
-  {key: 'CORE_IODINE_CUMULATIVE', label: 'Iodine'},
-  {key: 'CORE_XENON_CUMULATIVE', label: 'Xenon' },
-  { key: 'VACUUM_RETENTION_TANK_VOLUME', label: 'Vacuum Retention Tank Volume' },
-  {key: 'SECONDARY_TOTAL', label: 'Secondary Total' }
-];
+const ENDPOINT = 'http://localhost:8785/?variable=WEBSERVER_BATCH_GET&value=*condenser_*,*coolant_sec*,VACUUM*,*core*,*time*,POWER_*,GENERATOR_*_KW';
 
 type ChartProps = {
   history: DataPoint[];
@@ -33,109 +33,140 @@ type ChartProps = {
   label: string;
 };
 
-const Chart: React.FC<ChartProps> = ({ history, chartKey, label }) => {
-  const svgRef = useRef<SVGSVGElement | null>(null);
+type GraphConfig = {
+  secondaryAxis: SecondaryAxisSource,
+  secondaryType: SecondaryGraphType,
+  colors: ColorOptions;
+  historyMapper: (dataPoint: DataPoint) => HistoryDataPoint;
+  label: string;
+}
 
-  let values : number[];
-  switch (chartKey) {
-    case 'CONDENSOR_TOTAL':
-        values = history.map(d => d.CONDENSER_VOLUME + d.CONDENSER_VAPOR_VOLUME);
-        break;
-    case 'SECONDARY_TOTAL':
-        values = history.map(d => d.COOLANT_SEC_2_VOLUME + d.CONDENSER_VOLUME + d.CONDENSER_VAPOR_VOLUME + d.VACUUM_RETENTION_TANK_VOLUME);
-        break;
-    default:
-      values = history.map(d => d[chartKey as keyof DataPoint] as number);
+const graphs:GraphConfig[] = [
+    // CORE data
+  {
+    secondaryAxis: SecondaryAxisSource.data2,
+    secondaryType: SecondaryGraphType.Line,
+    colors: {
+      mainColor: color('green') as RGBColor,
+      secondaryColor: color('yellow') as RGBColor
+    },
+    historyMapper: (dataPoint:DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.CORE_TEMP,
+        data2: dataPoint.CORE_STATE_CRITICALITY,
+    }),
+    label: 'Core Temperature and Criticality',
+  },
+    //IODINE and XENON data
+  {
+    secondaryType: SecondaryGraphType.None,
+    secondaryAxis: SecondaryAxisSource.None,
+    colors: {mainColor: color('yellow') as RGBColor},
+    historyMapper: (dataPoint: DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.CORE_IODINE_CUMULATIVE,
+    }),
+    label: 'Core Iodine concentration'
+  },
+  {
+    secondaryType: SecondaryGraphType.None,
+    secondaryAxis: SecondaryAxisSource.None,
+    colors: {mainColor: color('yellow') as RGBColor},
+    historyMapper: (dataPoint: DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.CORE_XENON_CUMULATIVE,
+    }),
+    label: 'Core Xenon concentration'
+  },
+  // Steam Generators
+  {
+    secondaryType: SecondaryGraphType.StackedBar,
+    secondaryAxis: SecondaryAxisSource.None,
+    colors: {mainColor: color('blue') as RGBColor, secondaryColor: color('white') as RGBColor},
+    historyMapper: (dataPoint: DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.COOLANT_SEC_0_LIQUID_VOLUME / 1000,
+      data2: (dataPoint.COOLANT_SEC_0_VOLUME - dataPoint.COOLANT_SEC_0_LIQUID_VOLUME)/1000
+    }),
+    label: 'Steam Generator 1 contents'
+  },
+  {
+    secondaryType: SecondaryGraphType.StackedBar,
+    secondaryAxis: SecondaryAxisSource.None,
+    colors: {mainColor: color('blue') as RGBColor, secondaryColor: color('white') as RGBColor},
+    historyMapper: (dataPoint: DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.COOLANT_SEC_1_LIQUID_VOLUME / 1000,
+      data2: (dataPoint.COOLANT_SEC_1_VOLUME - dataPoint.COOLANT_SEC_1_LIQUID_VOLUME) / 1000
+    }),
+    label: 'Steam Generator 2 contents'
+  },
+  {
+    secondaryType: SecondaryGraphType.StackedBar,
+    secondaryAxis: SecondaryAxisSource.None,
+    colors: {mainColor: color('blue') as RGBColor, secondaryColor: color('white') as RGBColor},
+    historyMapper: (dataPoint: DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.COOLANT_SEC_2_LIQUID_VOLUME / 1000,
+      data2: (dataPoint.COOLANT_SEC_2_VOLUME - dataPoint.COOLANT_SEC_2_LIQUID_VOLUME) / 1000
+    }),
+    label: 'Steam Generator 3 contents'
+  },
+    // condenser
+  {
+    secondaryType: SecondaryGraphType.StackedBar,
+    secondaryAxis: SecondaryAxisSource.None,
+    colors: {mainColor: color('blue') as RGBColor, secondaryColor: color('white') as RGBColor, tertiaryColor: color('yellow') as RGBColor},
+    historyMapper: (dataPoint: DataPoint) => ({
+      secondsSinceStart: dataPoint.timestamp,
+      data: dataPoint.CONDENSER_VOLUME / 1000,
+      data2: dataPoint.CONDENSER_VAPOR_VOLUME / 1000,
+      data3: dataPoint.VACUUM_RETENTION_TANK_VOLUME / 1000
+    }),
+    label: 'Condenser contents (+ retention tank)'
   }
-  useEffect(() => {
-    if (!svgRef.current || history.length === 0) return;
-
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
-
-    const width = 500;
-    const height = 230;
-    const margin = { top: 20, right: 30, bottom: 30, left: 50 };
-
-    // Compute values for the selected key or total
-    let values : number[];
-    switch (chartKey) {
-      case 'CONDENSOR_TOTAL':
-        values = history.map(d => d.CONDENSER_VOLUME + d.CONDENSER_VAPOR_VOLUME);
-        break;
-      case 'SECONDARY_TOTAL':
-        values = history.map(d => d.COOLANT_SEC_2_VOLUME + d.CONDENSER_VOLUME + d.CONDENSER_VAPOR_VOLUME + d.VACUUM_RETENTION_TANK_VOLUME);
-        break;
-      default:
-        values = history.map(d => d[chartKey as keyof DataPoint] as number);
-    }
-    values = values.filter(v => v !== undefined && v !== null);
-    const min = d3.min(values) ?? 0;
-    const max = d3.max(values) ?? 1;
-
-    const x = d3
-      .scaleTime()
-      .domain(d3.extent(history, (d) => new Date(d.timestamp)) as [Date, Date])
-      .range([margin.left, width - margin.right]);
-
-    const y = d3
-      .scaleLinear()
-      .domain([min, max])
-      .range([height - margin.bottom, margin.top]);
-
-    const line = d3
-      .line<number>()
-      .x((_, i) => x(new Date(history[i].timestamp)))
-      .y((v) => y(v));
-
-    svg
-      .append('g')
-      .attr('transform', `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x));
-
-    svg
-      .append('g')
-      .attr('transform', `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y)
-          .ticks(6, ",f"));
-
-    svg
-      .append('path')
-      .datum(values)
-      .attr('fill', 'none')
-      .attr('stroke', 'steelblue')
-      .attr('stroke-width', 4)
-      .attr('d', line);
-  }, [history, chartKey]);
-
-  return (
-    <div style={{ marginBottom: 32 }}>
-      <div>{label} {values[values.length - 1]}</div>
-      <svg ref={svgRef} width={500} height={230} />
-    </div>
-  );
-};
+]
 
 const HistoryGraph: React.FC = () => {
   const [history, setHistory] = useState<DataPoint[]>([]);
+  const [connected, setConnected] = useState<boolean>(false);
 
   useEffect(() => {
+    let lastTimestamp = 0;
     const fetchData = async () => {
-      const res = await fetch(ENDPOINT);
-      const data = await res.json();
-      setHistory((prev) => [
-        ...prev,
-        {
-          timestamp: Date.now(),
-          CONDENSER_VOLUME: data.values.CONDENSER_VOLUME,
-          CONDENSER_VAPOR_VOLUME: data.values.CONDENSER_VAPOR_VOLUME,
-          COOLANT_SEC_2_VOLUME: data.values.COOLANT_SEC_2_VOLUME,
-            VACUUM_RETENTION_TANK_VOLUME: data.values.VACUUM_RETENTION_TANK_VOLUME,
-            CORE_TEMP: data.values.CORE_TEMP,
-          CORE_XENON_CUMULATIVE: data.values.CORE_XENON_CUMULATIVE,
-          CORE_IODINE_CUMULATIVE: data.values.CORE_IODINE_CUMULATIVE
-        },
-      ].slice(-600));
+      try {
+        const res = await fetch(ENDPOINT);
+        const data = await res.json();
+        setConnected(true);
+        if (data.values.TIME_STAMP != lastTimestamp) {
+          setHistory((prev) => [
+            ...prev,
+            {
+              timestamp: data.values.TIME_STAMP,
+              CONDENSER_VOLUME: data.values.CONDENSER_VOLUME,
+              CONDENSER_VAPOR_VOLUME: data.values.CONDENSER_VAPOR_VOLUME,
+              COOLANT_SEC_0_LIQUID_VOLUME: data.values.COOLANT_SEC_0_LIQUID_VOLUME,
+              COOLANT_SEC_0_VOLUME: data.values.COOLANT_SEC_0_VOLUME,
+              COOLANT_SEC_1_LIQUID_VOLUME: data.values.COOLANT_SEC_1_LIQUID_VOLUME,
+              COOLANT_SEC_1_VOLUME: data.values.COOLANT_SEC_1_VOLUME,
+              COOLANT_SEC_2_LIQUID_VOLUME: data.values.COOLANT_SEC_2_LIQUID_VOLUME,
+              COOLANT_SEC_2_VOLUME: data.values.COOLANT_SEC_2_VOLUME,
+              VACUUM_RETENTION_TANK_VOLUME: data.values.VACUUM_RETENTION_TANK_VOLUME,
+              CORE_TEMP: data.values.CORE_TEMP,
+              CORE_STATE_CRITICALITY: data.values.CORE_STATE_CRITICALITY,
+              CORE_XENON_CUMULATIVE: data.values.CORE_XENON_CUMULATIVE,
+              CORE_IODINE_CUMULATIVE: data.values.CORE_IODINE_CUMULATIVE,
+              GENERATOR_0_KW: data.values.GENERATOR_0_KW,
+              GENERATOR_1_KW: data.values.GENERATOR_1_KW,
+              GENERATOR_2_KW: data.values.GENERATOR_2_KW,
+              POWER_DEMAND_MW: data.values.POWER_DEMAND_MW,
+            },
+          ].slice(-600));
+          lastTimestamp = data.values.TIME_STAMP
+        }
+      } catch {
+        setConnected(false);
+      }
     };
 
     fetchData();
@@ -143,15 +174,16 @@ const HistoryGraph: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
+  if (!connected) {
+    return <div className="text-white text-center p-10 bg-black text-3xl h-dvh">Waiting for data...  Please start the webserver in Nucleares</div>;
+  }
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 m-10">
-      {chartConfigs.map((cfg) => (
-        <Chart
-          key={cfg.key}
-          history={history}
-          chartKey={cfg.key}
-          label={cfg.label}
-        />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-10 bg-black h-dvh">
+      {history && history.length && graphs.map((graph, index) => (
+          <BarGraph history={history.map(graph.historyMapper)} secondaryGraphType={graph.secondaryType}
+                    secondaryAxisSource={graph.secondaryAxis} color={graph.colors} label={graph.label}
+                    key={index}
+          />
       ))}
     </div>
   );

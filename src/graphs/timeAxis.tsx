@@ -6,6 +6,16 @@ function formatMinutesSeconds(date:Date) {
     const s = String(date.getSeconds()).padStart(2, '0');
     return `${m}:${s}`;
 }
+
+function roundDateToNearestSecond(date:Date) {
+    const ms = date.getMilliseconds();
+    const rounded = new Date(date.getTime());
+    rounded.setMilliseconds(0);
+    if (ms >= 500) {
+        rounded.setSeconds(rounded.getSeconds() + 1);
+    }
+    return rounded;
+}
 export default function TimeAxis(props: { width: number, height: number, domain: Date[], range: number[], y:number }) {
     const domainString = props.domain.map(formatMinutesSeconds).join("-");
     const rangeString = props.range.join("-");
@@ -13,7 +23,9 @@ export default function TimeAxis(props: { width: number, height: number, domain:
         const xScale = scaleTime()
             .domain(props.domain)
             .range(props.range)
-        return xScale.ticks()
+        const maxTicks = Math.min(10, Math.floor(Math.abs(props.range[0] - props.range[1]) / 60));
+        const ticks = xScale.ticks(maxTicks).map(roundDateToNearestSecond);
+        return Array.from(new Set(ticks))
             .map(value => ({
                 value,
                 xOffset: xScale(value)
