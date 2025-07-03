@@ -29,7 +29,7 @@ export default function TimeAxis(props: { width: number, height: number, domain:
             "v", 6,
         ].join(" ")}
               fill="none"
-              stroke="black"
+              stroke="white"
         />
         {ticks.map(({ value, xOffset }, i) => (
             <g
@@ -38,11 +38,12 @@ export default function TimeAxis(props: { width: number, height: number, domain:
             >
                 <line
                     y2="6"
-                    stroke="currentColor"
+                    stroke="white"
                 />
                 <text
                     style={{
-                        fontSize: "10px",
+                        stroke: 'white',
+                        fontSize: "15px",
                         textAnchor: "middle",
                         transform: "translateY(20px)"
                     }}>

@@ -28,7 +28,7 @@ export default function RightAxis(props: { domain: number[], range: number[], le
             "H", 10
         ].join(" ")}
                 fill="none"
-                stroke="black"
+                stroke="white"
               />
         {ticks.map(({ value, yOffset}, i) => (
             <g
@@ -37,12 +37,12 @@ export default function RightAxis(props: { domain: number[], range: number[], le
             >
                 <line
                     x2="10"
-                    stroke="currentColor"
+                    stroke="white"
                 />
                 <text
                     style={{
-                        stroke: value < 0 ? "red" : "black",
-                        fontSize: "10px",
+                        stroke: value < 0 ? "red" : "white",
+                        fontSize: "15px",
                         textAnchor: "start",
                         transform: "translateX(15px) translateY(3px)"
                     }}>

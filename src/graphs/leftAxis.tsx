@@ -17,26 +17,27 @@ export default function LeftAxis(props: {domain: number[], range: number[] }) {
     }, [domainString, rangeString]);
     return <svg>
         <path d={[
-            "M", 50, 20,
-            "H", 60,
+            "M", 70, 20,
+            "H", 80,
             "V", props.range[0],
-            "H", 50,
+            "H", 70,
         ].join(" ")}
               fill="none"
-              stroke="black"
+              stroke="white"
         />
         {ticks.map(({ value, yOffset}, i) => (
             <g
                 key={i}
-                transform={`translate(50, ${yOffset})`}
+                transform={`translate(70, ${yOffset})`}
             >
                 <line
                     x2="10"
-                    stroke="currentColor"
+                    stroke="white"
                 />
                 <text
                     style={{
-                        fontSize: "10px",
+                        stroke: value < 0 ? "red" : "white",
+                        fontSize: "15px",
                         textAnchor: "end",
                         transform: "translateX(-5px) translateY(3px)"
                     }}>
