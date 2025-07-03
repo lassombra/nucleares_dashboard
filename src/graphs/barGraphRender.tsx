@@ -1,6 +1,7 @@
 import {ColorOptions, HistoryDataPoint, SecondaryGraphType} from "@/graphs/barGraph";
 import SingleBars from "@/graphs/singleBars";
 import Lines from "@/graphs/Lines";
+import StackedBars from "@/graphs/stackedBars";
 
 export type BarGraphRenderProps = {
     history: HistoryDataPoint[];
@@ -39,6 +40,12 @@ export default function BarGraphRender(props: BarGraphRenderProps) {
                            timeRange={props.axes.time.range} timeDomain={props.axes.time.domain}
                            range={props.axes.primary.range} domain={props.axes.primary.domain}/>
             {props.secondaryGraphType === SecondaryGraphType.Line ? <Lines history={props.history} colors={props.colors} axes={props.axes} /> : null}
+        </svg>
+    } else {
+        return <svg>
+            <StackedBars history={props.history} colors={props.colors}
+                            timeRange={props.axes.time.range} timeDomain={props.axes.time.domain}
+                            range={props.axes.primary.range} domain={props.axes.primary.domain}/>
         </svg>
     }
 }

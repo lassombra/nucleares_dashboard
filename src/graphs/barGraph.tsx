@@ -47,24 +47,32 @@ export type BarGraphProps = {
 /// <summary>
 /// Calculates the axes for the bar graph based on the history data and dimensions.
 /// </summary>
-function calcAxes(history: HistoryDataPoint[], height: number): ScaleLinear<number, number, never>[] {
+function calcAxes(history: HistoryDataPoint[], height: number, useSumRange = false): ScaleLinear<number, number, never>[] {
+    const mainDomain = extent(history, d => useSumRange ? (d.data + (d.data2 ?? 0) + (d.data3 ?? 0) + (d.data4 ?? 0)) : d.data) as [number, number];
+    if (useSumRange) {
+        mainDomain[0] = Math.min(
+            extent(history, d => d.data)[0] as number,
+            extent(history, d => d.data2 ?? Infinity)[0] as number,
+            extent(history, d => d.data3 ?? Infinity)[0] as number,
+            extent(history, d => d.data4 ?? Infinity)[0] as number);
+    }
     const result = [scaleLinear()
-        .domain(extent(history, d => d.data) as [number, number])
+        .domain(mainDomain)
         .range([height + 20, 20])
         .nice()];
-    if (history[0].data2 !== undefined) {
+    if (history[0].data2 !== undefined && !useSumRange) {
         result.push(scaleLinear()
             .domain(extent(history, d => d.data2 ?? 0) as [number, number])
             .range([height + 20, 20])
             .nice());
     }
-    if (history[0].data3 !== undefined) {
+    if (history[0].data3 !== undefined && !useSumRange) {
         result.push(scaleLinear()
             .domain(extent(history, d => d.data3 ?? 0) as [number, number])
             .range([height + 20, 20])
             .nice());
     }
-    if (history[0].data4 !== undefined) {
+    if (history[0].data4 !== undefined && !useSumRange) {
         result.push(scaleLinear()
             .domain(extent(history, d => d.data4 ?? 0) as [number, number])
             .range([height + 20, 20])
@@ -81,7 +89,7 @@ export function BarGraph(props: BarGraphProps) {
     const topMargin = 20;
     const bottomMargin = 50;
     const height = dimensions.height - topMargin - bottomMargin;
-    const axes = calcAxes(props.history, height);
+    const axes = calcAxes(props.history, height, props.secondaryGraphType === SecondaryGraphType.StackedBar);
     const timeAxis = scaleTime()
         .domain([new Date(props.history[0].secondsSinceStart * 1000), new Date(props.history[props.history.length - 1].secondsSinceStart * 1000)])
         .range([leftMargin, dimensions.width - rightMargin]);
