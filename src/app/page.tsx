@@ -27,12 +27,6 @@ type DataPoint = {
 
 const ENDPOINT = 'http://localhost:8785/?variable=WEBSERVER_BATCH_GET&value=*condenser_*,*coolant_sec*,VACUUM*,*core*,*time*,POWER_*,GENERATOR_*_KW';
 
-type ChartProps = {
-  history: DataPoint[];
-  chartKey: string;
-  label: string;
-};
-
 type GraphConfig = {
   secondaryAxis: SecondaryAxisSource,
   secondaryType: SecondaryGraphType,
