@@ -6,7 +6,6 @@ import {extent, ScaleLinear, scaleLinear, scaleTime} from "d3";
 import LeftAxis from "@/graphs/leftAxis";
 import TimeAxis from "@/graphs/timeAxis";
 import RightAxis from "@/graphs/rightAxis";
-import SingleBars from "@/graphs/singleBars";
 import BarGraphRender from "@/graphs/barGraphRender";
 
 export type HistoryDataPoint = {
