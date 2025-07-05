@@ -1,4 +1,4 @@
-const { app, BrowserWindow, protocol, net } = require('electron');
+const { app, BrowserWindow, protocol, net, ipcMain } = require('electron');
 const path = require('path');
 
 let myWindow = null
@@ -7,19 +7,28 @@ const createWindow = () => {
 
     const win = new BrowserWindow({
         width: 800,
-        height: 600
+        height: 600,
+        webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            webSecurity: true,
+            enableRemoteModule: false,
+            devTools: true
+        }
     })
     if (process.env.NODE_ENV === 'development') {
         win.loadURL('http://localhost:3000');
     } else {
         win.loadFile(path.join(__dirname, 'nextBuild', 'index.html'));
-        // win.setMenuBarVisibility(false);
-        // win.removeMenu();
+        win.setMenuBarVisibility(false);
+        win.removeMenu();
     }
     return win;
 }
 
-const gotTheLock = app.requestSingleInstanceLock(additionalData)
+const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
     app.quit()
 } else {
@@ -51,3 +60,9 @@ if (!gotTheLock) {
     })
 
 }
+
+ipcMain.on('toggle-fullscreen', () => {
+    if (myWindow) {
+        myWindow.setFullScreen(!myWindow.isFullScreen());
+    }
+});

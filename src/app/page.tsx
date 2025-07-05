@@ -178,6 +178,20 @@ const HistoryGraph: React.FC = () => {
         const interval = setInterval(fetchData, 1000);
         return () => clearInterval(interval);
     }, [setHistory]);
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "F11") {
+                // @ts-ignore
+                if (window?.electron) {
+                    e.preventDefault();
+                }
+                // @ts-ignore
+                window?.electron?.ipcRenderer?.send?.("toggle-fullscreen");
+            }
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, []);
 
     return (
         <div className="bg-black h-dvh overflow-hidden flex flex-col">
