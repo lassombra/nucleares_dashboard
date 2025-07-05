@@ -124,7 +124,7 @@ const graphs:GraphConfig[] = [
 
 function combineHistory(param: DataPoint) {
     return (history:DataPoint[]) => {
-        if (history[history.length - 1].timestamp === param.timestamp) {
+        if (history.length !== 0 && history[history.length - 1].timestamp === param.timestamp) {
             return history;
         }
         return [...history, param].slice(-600);
@@ -132,7 +132,7 @@ function combineHistory(param: DataPoint) {
 }
 
 const HistoryGraph: React.FC = () => {
-    const [history, setHistory] = useLocalStorageState<DataPoint[]>('history',[]);
+    const [history, setHistory] = useLocalStorageState<DataPoint[]>('history', []);
     const [connected, setConnected] = useState<boolean>(false);
 
     useEffect(() => {
@@ -179,17 +179,27 @@ const HistoryGraph: React.FC = () => {
         return () => clearInterval(interval);
     }, [setHistory]);
 
-    if (!connected) {
-        return <div className="text-white text-center p-10 bg-black text-3xl h-dvh">Waiting for data...  Please start the webserver in Nucleares</div>;
-    }
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-10 bg-black h-dvh">
-            {history && history.length && graphs.map((graph, index) => (
-                <BarGraph history={history.map(graph.historyMapper)} secondaryGraphType={graph.secondaryType}
-                          secondaryAxisSource={graph.secondaryAxis} color={graph.colors} label={graph.label}
-                          key={index}
-                />
-            ))}
+        <div className="bg-black h-dvh overflow-hidden flex flex-col">
+            <h1 className="text-center text-white text-4xl font-bold mb-4">Nucleares History Graphs</h1>
+            <p className="text-center text-gray-400 mb-8">Graphs are updated every second with the latest data from the
+                Nucleares webserver.
+                Graphs take into account pause and simulation rate, and will not operate during that time.
+                <a href="#" onClick={() => setHistory([])} className="font-bold text-lime-100">click here to clear data.</a>
+            </p>
+            {
+                !connected ?
+                <p className="text-center text-5xl text-red-500 mb-4">Failed to connect to the Nucleares webserver.
+                    Please ensure that you have started the webserver from the status app in game.</p> :
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 p-10 overflow-hidden h-full">
+                    {history && history.length && graphs.map((graph, index) => (
+                        <BarGraph history={history.map(graph.historyMapper)} secondaryGraphType={graph.secondaryType}
+                                  secondaryAxisSource={graph.secondaryAxis} color={graph.colors} label={graph.label}
+                                  key={index}
+                        />
+                    ))}
+                </div>
+            }
         </div>
     );
 };
