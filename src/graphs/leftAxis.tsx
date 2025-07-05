@@ -40,8 +40,9 @@ export default function LeftAxis(props: {domain: number[], range: number[] }) {
                 />
                 <text
                     style={{
-                        stroke: value < 0 ? "red" : "white",
+                        fill: value < 0 ? "red" : "white",
                         fontSize: "15px",
+                        fontWeight: "bold",
                         textAnchor: "end",
                         transform: "translateX(-5px) translateY(3px)"
                     }}>

@@ -54,8 +54,9 @@ export default function TimeAxis(props: { width: number, height: number, domain:
                 />
                 <text
                     style={{
-                        stroke: 'white',
+                        fill: "white",
                         fontSize: "15px",
+                        fontWeight: "bold",
                         textAnchor: "middle",
                         transform: "translateY(20px)"
                     }}>

@@ -41,8 +41,9 @@ export default function RightAxis(props: { domain: number[], range: number[], le
                 />
                 <text
                     style={{
-                        stroke: value < 0 ? "red" : "white",
+                        fill: value < 0 ? "red" : "white",
                         fontSize: "15px",
+                        fontWeight: "bold",
                         textAnchor: "start",
                         transform: "translateX(15px) translateY(3px)"
                     }}>
