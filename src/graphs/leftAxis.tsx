@@ -2,13 +2,11 @@ import {useMemo} from "react";
 import {scaleLinear} from "d3";
 
 export default function LeftAxis(props: {domain: number[], range: number[] }) {
-    const domainString = props.domain.join("-");
-    const rangeString = props.range.join("-");
     const ticks = useMemo(() => {
         const scale = scaleLinear()
             .domain(props.domain)
             .range(props.range);
-        const approxTickCount = Math.min(10, Math.floor(Math.abs(props.range[0] - props.range[1]) / 40));
+        const approxTickCount = Math.min(10, Math.ceil(Math.abs(props.range[0] - props.range[1]) / 100));
         const ticks = scale.ticks(approxTickCount)
             .map(value => Math.round(value * 100) / 100);
         return Array.from(new Set(ticks))
@@ -18,7 +16,7 @@ export default function LeftAxis(props: {domain: number[], range: number[] }) {
                     yOffset: scale(value)
                 };
             });
-    }, [domainString, rangeString]);
+    }, [props.domain, props.range]);
     return <svg>
         <path d={[
             "M", 70, 20,

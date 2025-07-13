@@ -1,10 +1,10 @@
 import {useMemo} from "react";
 import {scaleTime} from "d3";
 
-function formatMinutesSeconds(date:Date) {
-    const m = String(date.getMinutes()).padStart(2, '0');
-    const s = String(date.getSeconds()).padStart(2, '0');
-    return `${m}:${s}`;
+function formatHoursMinutes(date:Date) {
+    const h = String(date.getUTCHours()).padStart(2, '0');
+    const m = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
 }
 
 function roundDateToNearestSecond(date:Date) {
@@ -17,7 +17,7 @@ function roundDateToNearestSecond(date:Date) {
     return rounded;
 }
 export default function TimeAxis(props: { width: number, height: number, domain: Date[], range: number[], y:number }) {
-    const domainString = props.domain.map(formatMinutesSeconds).join("-");
+    const domainString = props.domain.map(formatHoursMinutes).join("-");
     const rangeString = props.range.join("-");
     const ticks = useMemo(() => {
         const xScale = scaleTime()
@@ -60,7 +60,7 @@ export default function TimeAxis(props: { width: number, height: number, domain:
                         textAnchor: "middle",
                         transform: "translateY(20px)"
                     }}>
-                    { formatMinutesSeconds(value) }
+                    { formatHoursMinutes(value) }
                 </text>
             </g>
         ))}

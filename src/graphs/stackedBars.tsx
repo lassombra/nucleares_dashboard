@@ -1,4 +1,4 @@
-import {ColorOptions, HistoryDataPoint} from "@/graphs/barGraph";
+import {ColorOptions, HistoryDataPoint} from "@/graphs/graph";
 import {ScaleLinear, scaleLinear, ScaleTime, scaleTime} from "d3";
 import {useDebugValue} from "react";
 
@@ -11,51 +11,39 @@ export type StackedBarProps = {
     domain: number[]; // [min, max] in data units
 }
 
-function calculateRectangles(history: HistoryDataPoint[], i: number, timeScale: ScaleTime<number, number, never>, rangeScale: ScaleLinear<number, number, never>, colors: ColorOptions) {
-    const x = timeScale(new Date((history[i].secondsSinceStart * 1000) - (i === 0 ? 0 : 500))); // left position of the bar at - 500ms except for the first bar
-    const width = timeScale(new Date(((history[i + 1]?.secondsSinceStart ?? history[i].secondsSinceStart) * 1000) - (i === history.length - 1 ? 0 : 500))) - x; // width based on the next point's time
-    const result = [
-        {
-            x,
-            y: rangeScale(history[i].data),
-            width,
-            height: rangeScale.range()[0] - rangeScale(history[i].data),
-            color: colors.mainColor
+function getBarsBeforeNow(historyDataPoint: HistoryDataPoint, barIndex: number) {
+    return historyDataPoint.bars.reduce((acc, bar, index) => {
+        if (index < barIndex) {
+            return acc + bar;
         }
-    ];
-    if (history[i].data2 !== undefined) {
-        const y =rangeScale(history[i].data + (history[i].data2 ?? 0))
-        result.push({
+        return acc;
+    }, 0);
+}
+
+function calculateRectangle(history: HistoryDataPoint, barIndex: number,
+                            rangeScale: ScaleLinear<number, number, never>) {
+    const lowerBarTop = getBarsBeforeNow(history, barIndex);
+    // top is the amount of the current bar + the amount of all previous bars
+    const top = rangeScale(history.bars[barIndex] + lowerBarTop);
+    // bottom is the amount of all previous bars, but no lower than the minimum of the range scale
+    const bottom = rangeScale(Math.max(lowerBarTop, rangeScale.domain()[0]));
+    const height = bottom - top; // height is the difference between top and bottom
+    return {y: top, height};
+}
+function calculateRectangles(history: HistoryDataPoint[], i: number, timeScale: ScaleTime<number, number, never>, rangeScale: ScaleLinear<number, number, never>, colors: ColorOptions) {
+    const x = timeScale(new Date((history[i].minutesSinceStart * 60_000) - (i === 0 ? 0 : 30_000))); // left position of the bar at - 30s except for the first bar
+    const width = timeScale(new Date(((history[i + 1]?.minutesSinceStart ??
+        history[i].minutesSinceStart) * 60_000) - (i === history.length - 1 ? 0 : 30_000))) - x; // width based on the next point's time
+    return history[i].bars.map((bar, barIndex) => {
+        const {y, height} = calculateRectangle(history[i], barIndex, rangeScale);
+        return {
             x,
             y,
             width,
-            height: rangeScale(history[i].data) - y,
-            color: colors.secondaryColor ?? colors.mainColor
-        });
-    }
-    if (history[i].data3 !== undefined) {
-        const y = rangeScale(history[i].data + (history[i].data2 ?? 0) + (history[i].data3 ?? 0));
-        const y_b = rangeScale(history[i].data + (history[i].data2 ?? 0))
-        result.push({
-            x,
-            y,
-            width,
-            height: y_b - y,
-            color: colors.tertiaryColor ?? colors.mainColor
-        });
-    }
-    if (history[i].data4 !== undefined) {
-        const y = rangeScale(history[i].data + (history[i].data2 ?? 0) + (history[i].data3 ?? 0) + (history[i].data4 ?? 0))
-        const y_b = rangeScale(history[i].data + (history[i].data2 ?? 0) + (history[i].data3 ?? 0));
-        result.push({
-            x,
-            y,
-            width,
-            height: y_b - y,
-            color: colors.quaternaryColor ?? colors.mainColor
-        });
-    }
-    return result;
+            height,
+            color: colors.barColors[barIndex % colors.barColors.length] // cycle through colors if more bars than colors
+        };
+    });
 }
 
 export default function StackedBars(props: StackedBarProps) {
