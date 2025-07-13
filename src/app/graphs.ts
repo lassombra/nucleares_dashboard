@@ -23,6 +23,31 @@ export type DataPoint = {
     GENERATOR_1_KW: number;
     GENERATOR_2_KW: number;
     POWER_DEMAND_MW: number;
+    CHEM_BORON_PPM: number;
+};
+
+export type ServerDataPoint = {
+    TIME_STAMP: number;
+    CONDENSER_VOLUME: number;
+    CONDENSER_VAPOR_VOLUME: number;
+    CONDENSER_TEMPERATURE: number;
+    CONDENSER_VACUUM: number;
+    COOLANT_SEC_0_LIQUID_VOLUME: number;
+    COOLANT_SEC_0_VOLUME: number;
+    COOLANT_SEC_1_LIQUID_VOLUME: number;
+    COOLANT_SEC_1_VOLUME: number;
+    COOLANT_SEC_2_LIQUID_VOLUME: number;
+    COOLANT_SEC_2_VOLUME: number;
+    VACUUM_RETENTION_TANK_VOLUME: number;
+    CORE_TEMP: number;
+    CORE_STATE_CRITICALITY: number;
+    CORE_XENON_CUMULATIVE: number;
+    CORE_IODINE_CUMULATIVE: number;
+    GENERATOR_0_KW: number;
+    GENERATOR_1_KW: number;
+    GENERATOR_2_KW: number;
+    POWER_DEMAND_MW: number;
+    CHEM_BORON_PPM: number;
 };
 
 export type LabelledDataPoint = {
@@ -69,10 +94,11 @@ export const graphs: GraphConfig[] = [
     },
     //IODINE and XENON data
     {
-        hasRightAxis: false,
+        hasRightAxis: true,
         colors: {lineColors: [
             color('yellow') as RGBColor,
-            color('orange') as RGBColor
+            color('orange') as RGBColor,
+            color('green') as RGBColor
         ], barColors: []},
         historyMapper: (dataPoint: DataPoint) => ({
             minutesSinceStart: dataPoint.timestamp,
@@ -83,19 +109,25 @@ export const graphs: GraphConfig[] = [
             }, {
                 data: dataPoint.CORE_XENON_CUMULATIVE,
                 axisIndex: 0
+            }, {
+                data: dataPoint.CHEM_BORON_PPM,
+                axisIndex: 1
             }]
         }),
         axisMappers: [(history: DataPoint[]) => {
             const iodine = extent(history, d => d.CORE_IODINE_CUMULATIVE) as [number, number];
             const xenon = extent(history, d => d.CORE_XENON_CUMULATIVE) as [number, number];
             return [Math.min(iodine[0], xenon[0]), Math.max(iodine[1], xenon[1])] as [number, number];
-        }],
+        }, (history: DataPoint[]) =>
+            extent(history, d => d.CHEM_BORON_PPM) as [number, number]
+        ],
         barAxisIndex: 0,
         label: 'Core',
         labelValueMapper(current: DataPoint) {
             return [
                 {label: `Iodine: ${Math.round(current.CORE_IODINE_CUMULATIVE * 100) / 100}`, color: color('yellow') as RGBColor},
-                {label: `Xenon: ${Math.round(current.CORE_XENON_CUMULATIVE * 100) / 100}`, color: color('orange') as RGBColor}
+                {label: `Xenon: ${Math.round(current.CORE_XENON_CUMULATIVE * 100) / 100}`, color: color('orange') as RGBColor},
+                {label: `Boron: ${Math.round(current.CHEM_BORON_PPM)}ppm`, color: color('green') as RGBColor}
             ];
         }
     },

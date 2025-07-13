@@ -1,13 +1,12 @@
 'use client';
 import React, {useEffect, useState} from 'react';
-import {Graph} from "@/graphs/graph";
 import useLocalStorageState from "@/app/useLocalStorageState";
-import {DataPoint, graphs} from "@/app/graphs";
+import {DataPoint, graphs, ServerDataPoint} from "@/app/graphs";
 import GraphProcessor from "@/app/GraphProcessor";
 
 
 
-const ENDPOINT = 'http://localhost:8785/?variable=WEBSERVER_BATCH_GET&value=*condenser_*,*coolant_sec*,VACUUM*,*core*,*time*,POWER_*,GENERATOR_*_KW';
+const ENDPOINT = 'http://localhost:8785/?variable=WEBSERVER_BATCH_GET&value=*condenser_*,*coolant_sec*,VACUUM*,*core*,*time*,POWER_*,GENERATOR_*_KW,*CHEM_BORON*';
 
 
 
@@ -17,6 +16,32 @@ function combineHistory(param: DataPoint) {
             return history;
         }
         return [...history, param].slice(-600);
+    }
+}
+
+function makeHistory(values: ServerDataPoint): DataPoint {
+    return {
+        timestamp: values.TIME_STAMP,
+        CONDENSER_VOLUME: values.CONDENSER_VOLUME,
+        CONDENSER_VAPOR_VOLUME: values.CONDENSER_VAPOR_VOLUME,
+        CONDENSER_VACUUM: values.CONDENSER_VACUUM,
+        CONDENSER_TEMPERATURE: values.CONDENSER_TEMPERATURE,
+        COOLANT_SEC_0_LIQUID_VOLUME: values.COOLANT_SEC_0_LIQUID_VOLUME,
+        COOLANT_SEC_0_VOLUME: values.COOLANT_SEC_0_VOLUME,
+        COOLANT_SEC_1_LIQUID_VOLUME: values.COOLANT_SEC_1_LIQUID_VOLUME,
+        COOLANT_SEC_1_VOLUME: values.COOLANT_SEC_1_VOLUME,
+        COOLANT_SEC_2_LIQUID_VOLUME: values.COOLANT_SEC_2_LIQUID_VOLUME,
+        COOLANT_SEC_2_VOLUME: values.COOLANT_SEC_2_VOLUME,
+        VACUUM_RETENTION_TANK_VOLUME: values.VACUUM_RETENTION_TANK_VOLUME,
+        CORE_TEMP: values.CORE_TEMP,
+        CORE_STATE_CRITICALITY: values.CORE_STATE_CRITICALITY,
+        CORE_XENON_CUMULATIVE: values.CORE_XENON_CUMULATIVE,
+        CORE_IODINE_CUMULATIVE: values.CORE_IODINE_CUMULATIVE,
+        GENERATOR_0_KW: values.GENERATOR_0_KW,
+        GENERATOR_1_KW: values.GENERATOR_1_KW,
+        GENERATOR_2_KW: values.GENERATOR_2_KW,
+        POWER_DEMAND_MW: values.POWER_DEMAND_MW,
+        CHEM_BORON_PPM: values.CHEM_BORON_PPM
     }
 }
 
@@ -35,28 +60,7 @@ const HistoryGraph: React.FC = () => {
                     const data = await res.json();
                     setConnected(true);
                     if (data.values.TIME_STAMP != lastTimestamp) {
-                        setHistory(combineHistory({
-                            timestamp: data.values.TIME_STAMP,
-                            CONDENSER_VOLUME: data.values.CONDENSER_VOLUME,
-                            CONDENSER_VAPOR_VOLUME: data.values.CONDENSER_VAPOR_VOLUME,
-                            CONDENSER_VACUUM: data.values.CONDENSER_VACUUM,
-                            CONDENSER_TEMPERATURE: data.values.CONDENSER_TEMPERATURE,
-                            COOLANT_SEC_0_LIQUID_VOLUME: data.values.COOLANT_SEC_0_LIQUID_VOLUME,
-                            COOLANT_SEC_0_VOLUME: data.values.COOLANT_SEC_0_VOLUME,
-                            COOLANT_SEC_1_LIQUID_VOLUME: data.values.COOLANT_SEC_1_LIQUID_VOLUME,
-                            COOLANT_SEC_1_VOLUME: data.values.COOLANT_SEC_1_VOLUME,
-                            COOLANT_SEC_2_LIQUID_VOLUME: data.values.COOLANT_SEC_2_LIQUID_VOLUME,
-                            COOLANT_SEC_2_VOLUME: data.values.COOLANT_SEC_2_VOLUME,
-                            VACUUM_RETENTION_TANK_VOLUME: data.values.VACUUM_RETENTION_TANK_VOLUME,
-                            CORE_TEMP: data.values.CORE_TEMP,
-                            CORE_STATE_CRITICALITY: data.values.CORE_STATE_CRITICALITY,
-                            CORE_XENON_CUMULATIVE: data.values.CORE_XENON_CUMULATIVE,
-                            CORE_IODINE_CUMULATIVE: data.values.CORE_IODINE_CUMULATIVE,
-                            GENERATOR_0_KW: data.values.GENERATOR_0_KW,
-                            GENERATOR_1_KW: data.values.GENERATOR_1_KW,
-                            GENERATOR_2_KW: data.values.GENERATOR_2_KW,
-                            POWER_DEMAND_MW: data.values.POWER_DEMAND_MW,
-                        }));
+                        setHistory(combineHistory(makeHistory(data.values)));
                         lastTimestamp = data.values.TIME_STAMP
                     }
                 }
