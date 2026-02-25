@@ -10,10 +10,13 @@ export type DataPoint = {
     CONDENSER_VACUUM: number;
     COOLANT_SEC_0_LIQUID_VOLUME: number;
     COOLANT_SEC_0_VOLUME: number;
+    COOLANT_SEC_0_PRESSURE: number;
     COOLANT_SEC_1_LIQUID_VOLUME: number;
     COOLANT_SEC_1_VOLUME: number;
+    COOLANT_SEC_1_PRESSURE: number;
     COOLANT_SEC_2_LIQUID_VOLUME: number;
     COOLANT_SEC_2_VOLUME: number;
+    COOLANT_SEC_2_PRESSURE: number;
     VACUUM_RETENTION_TANK_VOLUME: number;
     CORE_TEMP: number;
     CORE_STATE_CRITICALITY: number;
@@ -34,10 +37,13 @@ export type ServerDataPoint = {
     CONDENSER_VACUUM: number;
     COOLANT_SEC_0_LIQUID_VOLUME: number;
     COOLANT_SEC_0_VOLUME: number;
+    COOLANT_SEC_0_PRESSURE: number;
     COOLANT_SEC_1_LIQUID_VOLUME: number;
     COOLANT_SEC_1_VOLUME: number;
+    COOLANT_SEC_1_PRESSURE: number;
     COOLANT_SEC_2_LIQUID_VOLUME: number;
     COOLANT_SEC_2_VOLUME: number;
+    COOLANT_SEC_2_PRESSURE: number;
     VACUUM_RETENTION_TANK_VOLUME: number;
     CORE_TEMP: number;
     CORE_STATE_CRITICALITY: number;
@@ -167,69 +173,103 @@ export const graphs: GraphConfig[] = [
         labelValueMapper: current => ([
             {label: `Volume: ${Math.round(current.CONDENSER_VOLUME / 1000 * 100) / 100}kL`, color: color('#29F') as RGBColor},
             {label: `Vapor: ${Math.round(current.CONDENSER_VAPOR_VOLUME / 1000 * 100) / 100}kL`, color: color('white') as RGBColor},
-            {label: `Vacuum Retention: ${Math.round(current.VACUUM_RETENTION_TANK_VOLUME / 1000 * 100) / 100}kL`, color: color('yellow') as RGBColor},
+            {label: `Retention: ${Math.round(current.VACUUM_RETENTION_TANK_VOLUME / 1000 * 100) / 100}kL`, color: color('yellow') as RGBColor},
             {label: `Vacuum: ${Math.round(current.CONDENSER_VACUUM * 100)}%`, color: color('green') as RGBColor}
         ])
     },
     // Steam Generators
     {
-        hasRightAxis: false,
-        colors: {barColors: [color('#29F') as RGBColor, color('white') as RGBColor], lineColors: []},
+        hasRightAxis: true,
+        colors: {
+            barColors: [color('#29F') as RGBColor, color('white') as RGBColor],
+            lineColors: [color('green') as RGBColor]
+        },
         historyMapper: (dataPoint: DataPoint) => ({
             minutesSinceStart: dataPoint.timestamp,
             bars: [
                 dataPoint.COOLANT_SEC_0_LIQUID_VOLUME / 1000,
                 (dataPoint.COOLANT_SEC_0_VOLUME - dataPoint.COOLANT_SEC_0_LIQUID_VOLUME) / 1000
             ],
-            lines: []
+            lines: [{
+                data: dataPoint.COOLANT_SEC_0_PRESSURE,
+                axisIndex: 1
+            }]
         }),
         axisMappers: [(history: DataPoint[]) => [0,
-            extent(history, d => d.COOLANT_SEC_0_VOLUME / 1000)[1]] as [number, number]],
+            extent(history, d => d.COOLANT_SEC_0_VOLUME / 1000)[1]] as [number, number],
+            (history: DataPoint[]) => [0, extent(history, d=>d.COOLANT_SEC_0_PRESSURE)[1]] as [number, number]
+        ],
         barAxisIndex: 0,
         label: 'STG 1',
         labelValueMapper: (current: DataPoint) => ([
             {label: `Liquid: ${Math.round(current.COOLANT_SEC_0_LIQUID_VOLUME / 1000 * 100) / 100}kL`, color: color('#29F') as RGBColor},
-            {label: `Steam: ${Math.round((current.COOLANT_SEC_0_VOLUME - current.COOLANT_SEC_0_LIQUID_VOLUME) / 1000 * 100) / 100}kL`, color: color('white') as RGBColor}
+            {label: `Steam: ${Math.round((current.COOLANT_SEC_0_VOLUME - current.COOLANT_SEC_0_LIQUID_VOLUME) / 1000 * 100) / 100}kL`, color: color('white') as RGBColor},
+            {label: `Pressure: ${Math.round(current.COOLANT_SEC_0_PRESSURE)} bar`, color: color('green') as RGBColor}
         ])
     },
     {
-        hasRightAxis: false,
-        colors: {barColors: [color('#29F') as RGBColor, color('white') as RGBColor], lineColors: []},
+        hasRightAxis: true,
+        colors: {
+            barColors: [color('#29F') as RGBColor, color('white') as RGBColor],
+            lineColors: [color('green') as RGBColor]
+        },
         historyMapper: (dataPoint: DataPoint) => ({
             minutesSinceStart: dataPoint.timestamp,
             bars: [
                 dataPoint.COOLANT_SEC_1_LIQUID_VOLUME / 1000,
                 (dataPoint.COOLANT_SEC_1_VOLUME - dataPoint.COOLANT_SEC_1_LIQUID_VOLUME) / 1000
             ],
-            lines: []
+            lines: [
+                {
+                    data: dataPoint.COOLANT_SEC_1_PRESSURE,
+                    axisIndex: 1
+                }
+            ]
         }),
-        axisMappers: [(history: DataPoint[]) => [0,
-            extent(history, d => d.COOLANT_SEC_1_VOLUME / 1000)[1]] as [number, number]],
+        axisMappers: [
+            (history: DataPoint[]) => [0,
+                extent(history, d => d.COOLANT_SEC_1_VOLUME / 1000)[1]] as [number, number],
+            (history: DataPoint[]) => [0,
+                extent(history, d=>d.COOLANT_SEC_1_PRESSURE)[1]] as [number, number]
+        ],
         barAxisIndex: 0,
         label: 'STG 2',
         labelValueMapper: (current: DataPoint) => ([
             {label: `Liquid: ${Math.round(current.COOLANT_SEC_1_LIQUID_VOLUME / 1000 * 100) / 100}kL`, color: color('#29F') as RGBColor},
-            {label: `Steam: ${Math.round((current.COOLANT_SEC_1_VOLUME - current.COOLANT_SEC_1_LIQUID_VOLUME) / 1000 * 100) / 100}kL`, color: color('white') as RGBColor}
+            {label: `Steam: ${Math.round((current.COOLANT_SEC_1_VOLUME - current.COOLANT_SEC_1_LIQUID_VOLUME) / 1000 * 100) / 100}kL`, color: color('white') as RGBColor},
+            {label: `Pressure: ${Math.round(current.COOLANT_SEC_1_PRESSURE)} bar`, color: color('green') as RGBColor}
         ])
     },
     {
-        hasRightAxis: false,
-        colors: {barColors: [color('#29F') as RGBColor, color('white') as RGBColor], lineColors: []},
+        hasRightAxis: true,
+        colors: {
+            barColors: [color('#29F') as RGBColor, color('white') as RGBColor],
+            lineColors: [color('green') as RGBColor]},
         historyMapper: (dataPoint: DataPoint) => ({
             minutesSinceStart: dataPoint.timestamp,
             bars: [
                 dataPoint.COOLANT_SEC_2_LIQUID_VOLUME / 1000,
                 (dataPoint.COOLANT_SEC_2_VOLUME - dataPoint.COOLANT_SEC_2_LIQUID_VOLUME) / 1000
             ],
-            lines: []
+            lines: [
+                {
+                    data: dataPoint.COOLANT_SEC_2_PRESSURE,
+                    axisIndex: 1
+                }
+            ]
         }),
-        axisMappers: [(history: DataPoint[]) => [0,
-            extent(history, d => d.COOLANT_SEC_2_VOLUME / 1000)[1]] as [number, number]],
+        axisMappers: [
+            (history: DataPoint[]) => [0,
+                extent(history, d => d.COOLANT_SEC_2_VOLUME / 1000)[1]] as [number, number],
+            (history: DataPoint[]) => [0,
+                extent(history, d=>d.COOLANT_SEC_2_PRESSURE)[1]] as [number, number]
+        ],
         barAxisIndex: 0,
         label: 'STG 3',
         labelValueMapper: (current: DataPoint) => ([
             {label: `Liquid: ${Math.round(current.COOLANT_SEC_2_LIQUID_VOLUME / 1000 * 100) / 100}kL`, color: color('#29F') as RGBColor},
-            {label: `Steam: ${Math.round((current.COOLANT_SEC_2_VOLUME - current.COOLANT_SEC_2_LIQUID_VOLUME) / 1000 * 100) / 100}kL`, color: color('white') as RGBColor}
+            {label: `Steam: ${Math.round((current.COOLANT_SEC_2_VOLUME - current.COOLANT_SEC_2_LIQUID_VOLUME) / 1000 * 100) / 100}kL`, color: color('white') as RGBColor},
+            {label: `Pressure: ${Math.round(current.COOLANT_SEC_2_PRESSURE)} bar`, color: color('green') as RGBColor}
         ])
     }
 ]

@@ -2,7 +2,7 @@
 
 import {useState, SetStateAction, useEffect, Dispatch} from 'react';
 
-export default function useLocalStorageState<T>(key: string, initialValue: T): [T, Dispatch<SetStateAction<T>>] {
+export default function useLocalStorageState<T>(key: string, initialValue: T, version: number): [T, Dispatch<SetStateAction<T>>] {
 
     const [state, setState] = useState<T>(initialValue);
     const [loaded, setLoaded] = useState(false);
@@ -11,18 +11,22 @@ export default function useLocalStorageState<T>(key: string, initialValue: T): [
         if (storedValue) {
             try {
                 const parsedValue = JSON.parse(storedValue);
-                setState(parsedValue);
+                if (parsedValue.version !== version) {
+                    console.warn(`Version mismatch for key "${key}": expected ${version}, got ${parsedValue.version}. Using initial value.`);
+                } else {
+                    setState(parsedValue.state);
+                }
             } catch (e) {
                 console.error(`Error parsing localStorage value for key "${key}":`, e);
             }
         }
         setLoaded(true);
-    }, [key])
+    }, [key, version])
     useEffect(() => {
         if (loaded) {
-            localStorage.setItem(key, JSON.stringify(state));
+            localStorage.setItem(key, JSON.stringify({state, version}));
         }
-    }, [key, state, loaded])
+    }, [key, state, loaded, version]);
 
     return [state, setState];
 }

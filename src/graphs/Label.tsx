@@ -10,10 +10,10 @@ export type LabelProps = {
 }
 
 export default function Label(props: LabelProps) {
-    return <div>
-        <span className="text-4xl font-bold text-gray-400">{props.label}</span>&nbsp;
+    return <div className="flex flex-row flex-wrap w-full">
+        <span className="text-3xl font-bold text-gray-400 flex">{props.label} </span>
         {props.values.map((value, index) => (
-            <span key={index} className="text-3xl font-bold" style={{color: value.color.toString()}}>
+            <span key={index} className="text-3xl font-bold text-nowrap flex" style={{color: value.color.toString()}}>
                 {value.label}
                 {index < props.values.length - 1 ? ', ' : ''}
             </span>

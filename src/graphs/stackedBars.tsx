@@ -63,8 +63,8 @@ export default function StackedBars(props: StackedBarProps) {
                     key={`${i}-${j}`}
                     x={rect.x}
                     y={rect.y}
-                    width={rect.width}
-                    height={rect.height}
+                    width={Math.max(0,rect.width)}
+                    height={Math.max(0,rect.height)}
                     fill={rect.color.toString()}
                 />
             ))
