@@ -26,9 +26,9 @@ export class PIDController {
         this.integral += error * dt;
         const derivative = (error - this.previousError) / dt;
         const pterm = this.kp * error;
+        const iterm = this.ki * this.integral;
         const dterm = this.kd * derivative;
-        // use integral term inline to avoid an unused-variable lint error
-        let output = pterm + (this.ki * this.integral) + dterm;
+        let output = pterm + iterm + dterm;
         this.previousError = error;
         if (!this.engaged) {
             // if output is within .05 of the current setting, consider the controller engaged and start normal PID control on the next update

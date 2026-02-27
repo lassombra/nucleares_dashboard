@@ -102,13 +102,18 @@ const HistoryGraph: React.FC = () => {
                 Graphs take into account pause and simulation rate. Time on the graphs is updated roughly one in-game minute.
                 <a href="#" onClick={() => setHistory([])} className="font-bold text-lime-100">click here to clear data.</a>
             </p>
-            {/* Sidebar toggle button */}
-            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-40">
+            {/* Controls toggle button (vertical) on the right side */}
+            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 z-40 pointer-events-auto">
                 <button onClick={() => setPanelOpen(true)}
-                        className="bg-gray-800 text-white px-3 py-2 rounded-l hover:bg-gray-700">Controls</button>
+                        aria-expanded={panelOpen}
+                        aria-controls="pid-panel"
+                        className="bg-gray-800 text-white px-3 py-2 rounded-r hover:bg-gray-700 transform -rotate-90 origin-bottom-right shadow-md">
+                    Controls
+                </button>
             </div>
 
-            <PIDPanel open={panelOpen} onClose={() => setPanelOpen(false)} history={history} latest={latest ?? undefined} />
+            <PIDPanel open={panelOpen} onClose={() => setPanelOpen(false)}
+                      history={history} latest={latest ?? undefined} />
             {
                 !connected ?
                 <p className="text-center text-5xl text-red-500 mb-4">Failed to connect to the Nucleares webserver.
