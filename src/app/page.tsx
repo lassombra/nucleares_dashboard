@@ -1,16 +1,13 @@
 'use client';
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import useLocalStorageState from "@/app/useLocalStorageState";
 import {DataPoint, graphs, ServerDataPoint} from "@/app/graphs";
 import GraphProcessor from "@/app/GraphProcessor";
-import Control from "@/app/control";
-import {PIDController} from "@/PIDController";
+import PIDPanel from '@/controls/PIDPanel';
 
 
 
 const ENDPOINT = 'http://localhost:8785/?variable=WEBSERVER_BATCH_GET&value=*condenser_*,*coolant_sec*,VACUUM*,*core*,*time*,POWER_*,GENERATOR_*_KW,*CHEM_BORON*,ROD_BANK_POS_0_ORDERED';
-const ROOT = 'http://localhost:8785/';
-
 
 
 function combineHistory(param: DataPoint) {
@@ -52,11 +49,10 @@ function makeHistory(values: ServerDataPoint): DataPoint {
 }
 
 const HistoryGraph: React.FC = () => {
-    const [history, setHistory] = useLocalStorageState<DataPoint[]>('history', []);
+    const [history, setHistory] = useLocalStorageState<DataPoint[]>('history', [], 1);
     const [connected, setConnected] = useState<boolean>(false);
-    const [setpoint, setSetpoint] = useState<number>(100);
-    const [useSetpoint, setUseSetpoint] = useState<boolean>(false);
-    const controller = useRef(new PIDController(1.5, 0.2, 0.05))
+    const [panelOpen, setPanelOpen] = useState<boolean>(false);
+    const [latest, setLatest] = useState<ServerDataPoint | null>(null);
 
     useEffect(() => {
         let lastTimestamp = 0;
@@ -70,18 +66,7 @@ const HistoryGraph: React.FC = () => {
                     setConnected(true);
                     if (data.values.TIME_STAMP != lastTimestamp) {
                         setHistory(combineHistory(makeHistory(data.values)));
-                        if (lastTimestamp !== 0) {
-                            let rods = controller.current.update(data.values.CORE_TEMP, setpoint,
-                                data.values.TIME_STAMP - lastTimestamp, data.values.ROD_BANK_POS_0_ORDERED);
-                            if (data.values.CORE_TEMP > 360) {
-                                rods = ((100 - rods) / 2) + rods; // if over 360C, push rods in halfway faster
-                            }
-                            if (useSetpoint) {
-                                setRods(rods, data.values.ROD_BANK_POS_0_ORDERED);
-                            } else {
-                                controller.current.reset();
-                            }
-                        }
+                        setLatest(data.values);
                         lastTimestamp = data.values.TIME_STAMP
                     }
                 }
@@ -93,15 +78,15 @@ const HistoryGraph: React.FC = () => {
         fetchData();
         const interval = setInterval(fetchData, 1000);
         return () => clearInterval(interval);
-    }, [setHistory, setpoint, useSetpoint]);
+    }, [setHistory]);
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "F11") {
-                // @ts-ignore
+                // @ts-expect-error - electron is injected in the desktop build
                 if (window?.electron) {
                     e.preventDefault();
                 }
-                // @ts-ignore
+                // @ts-expect-error - electron is injected in the desktop build
                 window?.electron?.ipcRenderer?.send?.("toggle-fullscreen");
             }
         };
@@ -117,9 +102,13 @@ const HistoryGraph: React.FC = () => {
                 Graphs take into account pause and simulation rate. Time on the graphs is updated roughly one in-game minute.
                 <a href="#" onClick={() => setHistory([])} className="font-bold text-lime-100">click here to clear data.</a>
             </p>
-            <Control setPoint={setpoint} setSetPoint={setSetpoint}
-                    useSetpoint={useSetpoint} setUseSetpoint={setUseSetpoint}
-            />
+            {/* Sidebar toggle button */}
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2 z-40">
+                <button onClick={() => setPanelOpen(true)}
+                        className="bg-gray-800 text-white px-3 py-2 rounded-l hover:bg-gray-700">Controls</button>
+            </div>
+
+            <PIDPanel open={panelOpen} onClose={() => setPanelOpen(false)} history={history} latest={latest ?? undefined} />
             {
                 !connected ?
                 <p className="text-center text-5xl text-red-500 mb-4">Failed to connect to the Nucleares webserver.
@@ -134,12 +123,5 @@ const HistoryGraph: React.FC = () => {
     );
 };
 
-function setRods(rodPosition: number, currentPosition: number) {
-    const targetPosition = rodPosition;
-    console.log('Setting rods to ', targetPosition.toFixed(2), ' from ', currentPosition.toFixed(2));
-    fetch(`http://localhost:8785/?variable=RODS_ALL_POS_ORDERED&value=${targetPosition.toFixed(1)}`, {
-        method: 'POST',
-    });
-}
 
 export default HistoryGraph;

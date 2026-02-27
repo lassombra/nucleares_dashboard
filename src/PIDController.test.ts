@@ -3,7 +3,7 @@ import { PIDController } from "./PIDController";
 describe("PIDController", () => {
     let pid: PIDController;
     beforeEach(() => {
-        pid = new PIDController(1.5, 0.2, 0.05);
+        pid = new PIDController(0.5, 0.2, 0.05, [0, 100], true);
         pid.reset();
     });
 
@@ -43,6 +43,20 @@ describe("PIDController", () => {
         }
         expect(output).toBeGreaterThanOrEqual(0);
         expect(output).toBeLessThanOrEqual(100);
+    });
+
+    it("handles a sudden large error on startup and engages as expected", () => {
+        let control = 100;
+        let result = 0;
+        for (let i = 0; i < 50; i++) {
+            control = pid.update(result, 300, 1, control);
+            result = (result * 5 + (400 * ((100 - control) / 100))) / 6;
+            result = result + (Math.random() - 0.5); // add some slight noise to simulate real-world conditions
+            result = Math.max(0, Math.min(400, result)); // clamp result to 0-400
+        }
+        expect(pid.isEngaged).toBe(true);
+        expect(control).toBeGreaterThanOrEqual(24);
+        expect(Math.abs(result - 300)).toBeLessThan(5);
     });
 
     it("should settle towards setpoint over time", () => {

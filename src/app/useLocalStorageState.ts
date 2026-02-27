@@ -2,7 +2,7 @@
 
 import {useState, SetStateAction, useEffect, Dispatch} from 'react';
 
-export default function useLocalStorageState<T>(key: string, initialValue: T, version: number): [T, Dispatch<SetStateAction<T>>] {
+export default function useLocalStorageState<T>(key: string, initialValue: T, version: number = 1): [T, Dispatch<SetStateAction<T>>] {
 
     const [state, setState] = useState<T>(initialValue);
     const [loaded, setLoaded] = useState(false);
